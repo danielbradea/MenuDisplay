@@ -1,86 +1,90 @@
-# Menu Display System
+# MenuDisplay
 
-A flexible menu system for embedded displays (designed for 128x64 OLED screens) with support for:
-- Hierarchical menus with navigation
-- Top bar with left/right aligned icons
-- Scrolling for long menus
-- Customizable appearance
+## Description
+
+**MenuDisplay** is an advanced scrolling menu system for embedded displays.  
+It implements a customizable menu with vertical scrolling navigation, horizontal text scrolling for long items, dynamic icons, and submenu support.
+
+Designed for microcontrollers such as **ESP32** and **AVR-based boards**, it works seamlessly with displays using the **Adafruit GFX Library**.
+
+---
 
 ## Features
 
-### Menu System
-- **Hierarchical navigation** - Support for nested submenus with back navigation
-- **Dynamic scrolling** - Handles menus longer than visible area
-- **Text scrolling** - Automatic horizontal scrolling for long menu items
-- **Visual feedback** - Clear selection indicator (">" prefix)
+- ✅ Vertical navigation with automatic scroll
+- 📝 Horizontal text scrolling for long labels
+- 📁 Submenu support (nested menus)
+- ⚙️ Easy integration with callback actions
+- 🖥️ Abstracted rendering via `DisplayInterface` for portability
+- 📦 Includes a concrete display implementation for SH1106
+- 💡 Extendable with custom UI elements (e.g., status bars, icons)
 
-### Top Bar
-- **Customizable appearance** - Adjustable height and background color
-- **Icon support** - Left and right-aligned icons with configurable spacing
-- **Dynamic layout** - Icons automatically adjust to available space
+---
 
-### Technical Details
-- **Adafruit GFX compatible** - Works with any display supporting Adafruit_GFX
-- **Memory efficient** - Uses smart pointers and STL containers
-- **Responsive design** - Adapts to different display sizes
+## Getting Started
 
-## Class Structure
+### Requirements
 
-### MenuDisplay (`MenuDisplay.h`/`MenuDisplay.cpp`)
-The main class handling menu rendering and navigation.
+- Arduino IDE or PlatformIO
+- Adafruit GFX-compatible display (e.g., SH1106, SSD1306)
+- Adafruit GFX Library
 
-#### Public Methods:
-- **Navigation**:
-  - `scrollUp()`/`scrollDown()` - Move selection
-  - `select()` - Activate current item
-  - `goBack()` - Return to previous menu
-  - `canGoBack()` - Check if back navigation is available
+### Installation
 
-- **Configuration**:
-  - `setMenu()` - Set the current menu items
-  - `setVisibleItems()` - Set how many items show at once
-  - `setTopBarBackgroundColor()`/`setTopBarHeight()` - Customize top bar
-  - `setShowTopBar()` - Show/hide top bar
-  - `setDisplaySize()` - For non-standard displays
+Install the library via the **Arduino Library Manager** or manually:
 
-- **Icon Management**:
-  - `addLeftIcon()`/`addRightIcon()` - Add icons to top bar
-  - `clearLeftIcons()`/`clearRightIcons()` - Remove all icons
+```bash
+git clone https://github.com/danielbradea/MenuDisplay.git
+```
 
-- **Rendering**:
-  - `update()` - Redraws the entire display
+Copy the folder to your Arduino libraries directory.
 
-### MenuItem (`MenuItem.h`)
-Represents an individual menu item with optional submenu and action.
+---
 
-#### Key Methods:
-- `getLabel()` - Returns the display text
-- `hasSubmenu()` - Checks if item has submenu
-- `getSubmenu()` - Returns submenu items
-- `activate()` - Executes the item's action
-
-## Usage Example
+## Example
 
 ```cpp
-// Create display instance
-Adafruit_SSD1306 display(128, 64, &Wire);
-MenuDisplay menu(display);
+#include <MenuItem.h>
+#include <MenuBuilder.h>
+#include <DisplaySH1106G.h>
 
-// Create menu items
-auto mainMenu = {
-  std::make_shared<MenuItem>("Settings", []{ /* open settings */ }),
-  std::make_shared<MenuItem>("Info")
-};
-
-// Set the menu
-menu.setMenu(mainMenu);
-
-// In main loop:
-void loop() {
-  menu.update();
-  
-  if (buttonPressed(UP)) menu.scrollUp();
-  if (buttonPressed(DOWN)) menu.scrollDown();
-  if (buttonPressed(SELECT)) menu.select();
-  if (buttonPressed(BACK)) menu.goBack();
+// Callback function
+void onHelloSelected() {
+    Serial.println("Hello selected!");
 }
+
+// Display object
+DisplaySH1106G display(128, 64, -1);
+
+void setup() {
+    Serial.begin(115200);
+    display.begin();
+
+    // Create menu items
+    auto item1 = MenuBuilder::createItem("Say Hello", onHelloSelected);
+    auto item2 = MenuBuilder::createItem("Option 2");
+    auto submenu = MenuBuilder::createMenu("Submenu", {
+        MenuBuilder::createItem("Sub 1"),
+        MenuBuilder::createItem("Sub 2")
+    });
+
+    std::vector<std::shared_ptr<MenuItem>> menuItems = { item1, item2, submenu };
+
+    // Custom rendering and navigation code goes here
+}
+```
+
+> You must implement your own rendering and input handling using the `DisplayInterface`.
+
+---
+
+## File Overview
+
+- `MenuItem.h` – Represents menu items with optional submenus and actions
+- `MenuBuilder.h` – Factory methods for easy menu creation
+- `DisplayInterface.h` – Abstract class for rendering methods
+- `DisplaySH1106G.h` – Implementation of `DisplayInterface` using Adafruit SH1106
+- `StatusBarElement.h` – Base for on-screen status elements (icons, labels, etc.)
+
+---
+
