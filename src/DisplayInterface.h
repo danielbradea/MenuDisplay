@@ -34,11 +34,19 @@ public:
   // Prints a text string followed by a newline
   virtual void println(const char* text) = 0;
 
+  // Prints a formatted string at the current cursor position
+  // Example: display->printf("Temp: %d C", temperature);
+  virtual void printf(const char* format, ...) = 0;
+
+  // Sets the text size (1 is default, 2 is double size, etc.)
+  virtual void setTextSize(uint8_t size) = 0;
+
   // Pushes all drawing changes to the actual display
   virtual void display() = 0;
 
   // Clears the display buffer (not necessarily the screen immediately)
   virtual void clearDisplay() = 0;
+
 };
 
 #endif // DISPLAY_INTERFACE_H
