@@ -1,4 +1,6 @@
 #include <Adafruit_SH110X.h>
+#include <cstdio>  // For vsnprintf
+#include <cstdarg> // For va_list, va_start, va_end
 
 // Concrete implementation of DisplayInterface using the Adafruit_SH1106G OLED display
 class DisplaySH1106G : public DisplayInterface {
@@ -21,58 +23,73 @@ public:
   }
 
   // Draw a fast horizontal line on the display
-  void drawFastHLine(int x, int y, int w, int color) {
+  void drawFastHLine(int x, int y, int w, int color) override {
     oled.drawFastHLine(x, y, w, color);
   }
 
   // Fill a rectangular area on the display
-  void fillRect(int x, int y, int w, int h, int color) {
+  void fillRect(int x, int y, int w, int h, int color) override {
     oled.fillRect(x, y, w, h, color);
   }
 
   // Return the width of the display
-  int width() const {
+  int width() const override {
     return oled.width();
   }
 
   // Enable or disable text wrapping
-  void setTextWrap(bool wrap) {
+  void setTextWrap(bool wrap) override {
     oled.setTextWrap(wrap);
   }
 
   // Set the color used to draw text
-  void setTextColor(int color) {
+  void setTextColor(int color) override {
     oled.setTextColor(color);
   }
 
   // Set the cursor position for text
-  void setCursor(int x, int y) {
+  void setCursor(int x, int y) override {
     oled.setCursor(x, y);
   }
 
   // Print text to the display (without newline)
-  void print(const char* text) {
+  void print(const char* text) override {
     oled.print(text);
   }
 
   // Print text to the display followed by a newline
-  void println(const char* text) {
+  void println(const char* text) override {
     oled.println(text);
   }
 
   // Draw a single pixel at (x, y) with the given color
-  void drawPixel(int x, int y, int color) {
+  void drawPixel(int x, int y, int color) override {
     oled.drawPixel(x, y, color);
   }
 
   // Refresh the display with the current buffer contents
-  void display() {
+  void display() override {
     oled.display();
   }
 
   // Clear the display buffer
-  void clearDisplay() {
+  void clearDisplay() override {
     oled.clearDisplay();
+  }
+
+  // Print formatted text using printf-style syntax
+  void printf(const char* format, ...) override {
+    char buffer[128]; // Temporary buffer for formatted text
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buffer, sizeof(buffer), format, args);
+    va_end(args);
+    oled.print(buffer); // Print the formatted string
+  }
+
+  // Set the size of the text
+  void setTextSize(uint8_t size) override {
+    oled.setTextSize(size);
   }
 
   // Provide access to the underlying Adafruit_SH1106G object
