@@ -1,51 +1,36 @@
 #ifndef PIXEL_BLE_H
 #define PIXEL_BLE_H
 
-#include <Adafruit_GFX.h>
-#include "IIcon.h"
+#include <DisplayInterface.h>
+#include "StatusBarElement.h"
 
-class PixelBle: public IIcon {
+// The PixelBle class represents a graphical status bar element that displays the Bluetooth (BLE) connection status.
+class PixelBle : public StatusBarElement {
 private:
+  // BLE disconnected icon (9x14 pixel sprite)
   static const uint8_t BLE[9][14];
+
+  // BLE connected icon (9x14 pixel sprite)
   static const uint8_t BLE_CONNECTED[9][14];
 
-  // Position variables
-  int x = 0;
-  int y = 0;
-  int offsetX = 0;
-  int offsetY = 0;
-  
-  // Appearance and state variables
-  uint16_t color = 1;
+  // Bluetooth connection status: true = connected, false = disconnected
   bool isConnected = false;
-  IconPosition position = IconPosition::LEFT;
 
 public:
+  // Default constructor
   PixelBle() = default;
-  void draw(Adafruit_GFX& display, int xx = 0, int yy = 0) override;
 
+  // Draws the icon corresponding to the current connection status (connected or not)
+  void draw(DisplayInterface& display, int xx = 0, int yy = 0) override;
+
+  // Returns the width of the icon (used for layout)
+  int getWidth() override;
+
+  // Sets the Bluetooth connection status
   void setIsConnected(bool connected) { isConnected = connected; }
 
-  // Implement all pure virtual functions from IIcon
-  int getWidth() override { return 14; }
-  
-  void setX(int xPos) override { x = xPos; }
-  void setY(int yPos) override { y = yPos; }
-  int getX() const override { return x; }
-  int getY() const override { return y; }
-  
-  void setColor(uint16_t newColor) override { color = newColor; }
-  uint16_t getColor() const override { return color; }
-
-  // Offset management (only if they exist in IIcon)
-  void setOffsetX(int offset)  { offsetX = offset; }
-  int getOffsetX() const  { return offsetX; }
-  void setOffsetY(int offset) { offsetY = offset; }
-  int getOffsetY() const  { return offsetY; }
-
-  // Position management
-  void setPosition(IconPosition pos)  { position = pos; }
-  IconPosition getPosition() const  { return position; }
+  // Returns the current Bluetooth connection status
+  bool getIsConnected() { return isConnected; }
 };
 
 #endif

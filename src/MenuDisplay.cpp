@@ -1,256 +1,200 @@
 #include "MenuDisplay.h"
 
-// Main update function - redraws all display components
-void MenuDisplay::update() {
-  // Draw top bar if enabled
-  if (showTopBar) {
-    if (topBarBgColor == 0) {
-      // Draw a simple line if background is transparent (color 0)
-      display.drawFastHLine(0, topBarHeight, 128, 1);
-    } else {
-      // Fill the top bar with background color
-      display.fillRect(0, 0, 128, topBarHeight, topBarBgColor);
-    }
-  }
-
-  // Draw all display components
-  drawLeftIcons();    // Left-aligned icons
-  drawRightIcons();   // Right-aligned icons
-  drawMenu();         // Menu items
-  drawScrollBar();    // Scroll indicator
-}
-
-// Draw left-aligned icons in top bar
-void MenuDisplay::drawLeftIcons() const {
-  if (!showTopBar) return;  // Skip if top bar is hidden
-
-  int x = 0;  // Start position for first icon
-  for (size_t i = 0; i < leftIcons.size(); ++i) {
-    const auto& icon = leftIcons[i];
-    if (icon) {
-      icon->setPosition(IconPosition::LEFT);  // Set left alignment
-      int width = icon->getWidth();
-      
-      // Set icon color based on top bar background (contrast)
-      topBarBgColor == 1 ? icon->setColor(0) : icon->setColor(1);
-      
-      // Add spacing after first icon
-      if (i > 0) {
-        x += width;
-        x += iconSpacing;
+// Main render function - draws all visual components to the screen
+void MenuDisplay::render() {
+  if (renderDisplay) {
+    display.clearDisplay();
+    if (showStatusBar) {
+      // Draw top bar background or line if transparent
+      if (statusBarBgColor == 0) {
+        display.drawFastHLine(0, statusBarHeight, 128, 1);  // Transparent status bar
+      } else {
+        display.fillRect(0, 0, 128, statusBarHeight, statusBarBgColor);  // Filled top bar
       }
-      
-      // Draw the icon at calculated position
-      icon->draw(display, x, 0);
+    }
+    renderLeftElements();         // Draw left-aligned status symbols
+    renderRightElements();        // Draw right-aligned status symbols
+    renderMenu();                 // Draw menu items
+    renderScrollIndicator();      // Draw scroll position indicator
+    display.display();            // Commit changes to screen
+  }
+}
+
+// Renders left-aligned status bar elements
+void MenuDisplay::renderLeftElements() const {
+  if (!showStatusBar) return;
+
+  int x = 0;
+  for (const auto& item : leftElements) {
+    if (item) {
+      item->setPosition(StatusBarElementPosition::LEFT);
+      item->setColor(statusBarBgColor == 1 ? 0 : 1);  // Invert text color for contrast
+      item->draw(display, x, 0);
+      x += item->getWidth() + elementSpacing;
     }
   }
 }
 
-// Draw right-aligned icons in top bar
-void MenuDisplay::drawRightIcons() const {
-  if (!showTopBar) return;  // Skip if top bar is hidden
+// Renders right-aligned status bar elements, clipped if necessary
+void MenuDisplay::renderRightElements() const {
+  if (!showStatusBar) return;
 
   int totalWidth = 0;
-  int iconsToDraw = 0;
+  int itemsToDraw = 0;
 
-  // Calculate total width needed and how many icons fit
-  for (int i = rightIcons.size() - 1; i >= 0; --i) {
-    const auto& icon = rightIcons[i];
-    if (icon) {
-      int iconWidth = icon->getWidth();
-      int spacing = (totalWidth == 0) ? 0 : iconSpacing;
+  // Calculate how many elements can fit
+  for (int i = rightElements.size() - 1; i >= 0; --i) {
+    const auto& item = rightElements[i];
+    if (item) {
+      int itemWidth = item->getWidth();
+      int spacing = (totalWidth == 0) ? 0 : elementSpacing;
 
-      // Check if icon fits in remaining space
-      if (totalWidth + iconWidth + spacing <= displayHSize) {
-        totalWidth += iconWidth + spacing;
-        ++iconsToDraw;
+      if (totalWidth + itemWidth + spacing <= displayHSize) {
+        totalWidth += itemWidth + spacing;
+        ++itemsToDraw;
       } else {
-        break;  // Stop when no more space
+        break;
       }
     }
   }
 
-  // Draw icons from right to left
-  int x = displayHSize - totalWidth;  // Starting position
-  int drawn = 0;  // Counter for drawn icons
+  int x = displayHSize - totalWidth;
+  int drawn = 0;
 
-  for (int i = rightIcons.size() - 1; i >= 0 && drawn < iconsToDraw; --i) {
-    const auto& icon = rightIcons[i];
-    if (icon) {
-      int iconWidth = icon->getWidth();
-
-      icon->setPosition(IconPosition::RIGHT);  // Set right alignment
-      topBarBgColor == 1 ? icon->setColor(0) : icon->setColor(1);
-
-      // Draw icon and move position right
-      icon->draw(display, x, 0);
-      x += iconWidth;
-
-      ++drawn;
-      // Add spacing between icons
-      if (drawn < iconsToDraw) {
-        x += iconSpacing;
+  // Draw the calculated number of elements
+  for (int i = rightElements.size() - 1; i >= 0 && drawn < itemsToDraw; --i) {
+    const auto& item = rightElements[i];
+    if (item) {
+      item->setPosition(StatusBarElementPosition::RIGHT);
+      item->setColor(statusBarBgColor == 1 ? 0 : 1);
+      item->draw(display, x, 0);
+      x += item->getWidth();
+      if (++drawn < itemsToDraw) {
+        x += elementSpacing;
       }
     }
   }
 }
 
-// Draw the menu items
-void MenuDisplay::drawMenu() const {
-  int startY = showTopBar ? topBarHeight + 2 : 0;  // Start below top bar
-  int lineHeight = 10;  // Height of each menu item
-  int scrollbarWidth = (currentMenu.size() > visibleItems) ? 3 : 0;  // Scrollbar space
-  int maxWidth = display.width() - 4 - scrollbarWidth;  // Available width for text
+// Draws the visible portion of the menu
+void MenuDisplay::renderMenu() const {
+  int startY = showStatusBar ? statusBarHeight + 2 : 0;
+  constexpr int lineHeight = 10;
+  constexpr int prefixWidth = 12;
+  constexpr int charWidth = 6;
+  constexpr unsigned long scrollInterval = 40;
 
-  unsigned long currentMillis = millis();  // For scrolling animation
+  int scrollbarWidth = (currentMenu.size() > visibleElements) ? 3 : 0;
+  int maxWidth = display.width() - 4 - scrollbarWidth;
+  unsigned long currentMillis = millis();
 
-  for (int i = 0; i < visibleItems; ++i) {
-    int idx = scrollOffset + i;  // Actual menu index
-    if (idx >= currentMenu.size()) break;  // Skip if beyond menu items
+  for (int i = 0; i < visibleElements; ++i) {
+    int idx = scrollOffset + i;
+    if (idx >= currentMenu.size()) break;
 
     std::string label = currentMenu[idx]->getLabel();
-    int textWidth = label.length() * 6;  // 6px per character (monospace)
-
-    // Space for "> " prefix if selected
-    int prefixWidth = (idx == selectedIndex) ? 12 : 0;
-    int availableWidth = maxWidth - prefixWidth;
-
-    // Calculate horizontal scroll position for long selected items
+    int textWidth = label.length() * charWidth;
+    int availableWidth = maxWidth - ((idx == selectedIndex) ? prefixWidth : 0);
     int scrollX = 0;
+
+    // Handle text scrolling if label is too long
     if (idx == selectedIndex && textWidth > availableWidth) {
       int overflow = textWidth - availableWidth;
-      unsigned long scrollInterval = 40;  // ms per step
-      unsigned long totalCycle = overflow * 2;  // Forth and back
+      unsigned long totalCycle = overflow * 2;
       unsigned long step = (currentMillis / scrollInterval) % totalCycle;
-
-      // Calculate scroll position (ping-pong)
-      if (step > overflow) {
-        scrollX = (int)(step - overflow);  // Returning
-      } else {
-        scrollX = (int)(overflow - step);  // Going
-      }
-      scrollX = -scrollX;  // Negative for left scroll
+      scrollX = (step > overflow) ? (step - overflow) : (overflow - step);
+      scrollX = -scrollX;
     }
 
-    // Clear the line
-    display.fillRect(0, startY + i * lineHeight - 1, display.width(), lineHeight, 0);
+    display.fillRect(0, startY + i * lineHeight - 1, display.width(), lineHeight, 0);  // Clear line
     display.setTextWrap(false);
-    display.setTextColor(1);  // White text
+    display.setTextColor(1);
 
-    // Draw "> " prefix for selected item
     int textStartX = 0;
     if (idx == selectedIndex) {
       display.setCursor(0, startY + i * lineHeight);
-      display.print("> ");
-      textStartX = prefixWidth;  // Offset after prefix
+      display.print("> ");  // Indicate selected item
+      textStartX = prefixWidth;
     }
 
-    // Draw the menu text (with scrolling if needed)
     display.setCursor(textStartX + scrollX, startY + i * lineHeight);
     display.print(label.c_str());
   }
 }
 
-// Set new menu and reset navigation state
-void MenuDisplay::setMenu(const std::vector<std::shared_ptr<MenuItem>>& menu) {
-  currentMenu = menu;
-  selectedIndex = scrollOffset = 0;  // Reset position
-  while (!menuHistory.empty()) menuHistory.pop();  // Clear history
-}
-
-// Move selection up
-void MenuDisplay::scrollUp() {
-  if (selectedIndex > 0) {
-    selectedIndex--;
-    // Adjust scroll offset if needed
-    if (selectedIndex < scrollOffset) scrollOffset--;
-  }
-}
-
-// Move selection down
-void MenuDisplay::scrollDown() {
-  if (selectedIndex < currentMenu.size() - 1) {
-    selectedIndex++;
-    // Adjust scroll offset if needed
-    if (selectedIndex >= scrollOffset + visibleItems) scrollOffset++;
-  }
-}
-
-// Handle menu item selection
-void MenuDisplay::select() {
-  auto selected = currentMenu[selectedIndex];
-  if (selected && selected->hasSubmenu()) {
-    // Push current menu to history and open submenu
-    menuHistory.push(currentMenu);
-    currentMenu = selected->getSubmenu();
-    selectedIndex = scrollOffset = 0;  // Reset position
-  } else if (selected) {
-    // Execute item action
-    selected->activate();
-  }
-}
-
-// Navigate back to previous menu
-void MenuDisplay::goBack() {
-  if (!menuHistory.empty()) {
-    currentMenu = menuHistory.top();  // Restore previous menu
-    menuHistory.pop();
-    selectedIndex = scrollOffset = 0;  // Reset position
-  }
-}
-
-// Draw scroll bar indicator
-void MenuDisplay::drawScrollBar() const {
-  if (currentMenu.size() <= visibleItems) return;  // Skip if no scrolling needed
-
-  int barX = displayHSize - 2;  // Position from right edge
+// Renders the scroll indicator on the right side of the display
+void MenuDisplay::renderScrollIndicator() const {
+  int barX = displayHSize - 2;
   int totalItems = currentMenu.size();
-
-  // Calculate scroll bar area
-  int scrollOffsetY = showTopBar ? (topBarHeight + 3) : 2;
+  int scrollOffsetY = showStatusBar ? (statusBarHeight + 3) : 2;
   int barHeight = displayVSize - scrollOffsetY - 1;
 
-  // Draw dotted line
+  // Draw dotted vertical scrollbar
   for (int y = 0; y < barHeight; y++) {
     int pixelY = y + scrollOffsetY;
-    if (y % 2 == 0) {  // Every other pixel
+    if (y % 2 == 0) {
       display.drawPixel(barX, pixelY, 1);
     }
   }
 
-  // Calculate scroll position indicator
+  // Draw scroll position marker
   float percent = selectedIndex / (float)(totalItems - 1);
   int centerY = scrollOffsetY + (int)(percent * (barHeight - 1));
 
-  // Draw 3x3 position indicator
   for (int dy = -1; dy <= 1; dy++) {
     display.drawPixel(barX - 1, centerY + dy, 1);
-    display.drawPixel(barX,     centerY + dy, 1);
+    display.drawPixel(barX, centerY + dy, 1);
     display.drawPixel(barX + 1, centerY + dy, 1);
   }
 }
 
-// Check if back navigation is possible
+// Sets the current menu and clears history
+void MenuDisplay::setMenu(const std::vector<std::shared_ptr<MenuItem>>& menu) {
+  currentMenu = menu;
+  selectedIndex = scrollOffset = 0;
+  while (!menuHistory.empty()) menuHistory.pop();
+}
+
+// Navigates one item up in the menu
+void MenuDisplay::scrollUp() {
+  if (selectedIndex > 0) {
+    selectedIndex--;
+    if (selectedIndex < scrollOffset) scrollOffset--;
+  }
+}
+
+// Navigates one item down in the menu
+void MenuDisplay::scrollDown() {
+  if (selectedIndex < currentMenu.size() - 1) {
+    selectedIndex++;
+    if (selectedIndex >= scrollOffset + visibleElements) scrollOffset++;
+  }
+}
+
+// Activates the selected menu item or enters a submenu
+void MenuDisplay::select() {
+  if (selectedIndex >= 0 && selectedIndex < currentMenu.size()) {
+    auto selected = currentMenu[selectedIndex];
+    if (selected && selected->hasSubmenu()) {
+      menuHistory.push(currentMenu);
+      currentMenu = selected->getSubmenu();
+      selectedIndex = scrollOffset = 0;
+    } else if (selected) {
+      selected->activate();  // Execute menu action
+    }
+  }
+}
+
+// Returns to the previous menu (if available)
+void MenuDisplay::goBack() {
+  if (!menuHistory.empty()) {
+    currentMenu = menuHistory.top();
+    menuHistory.pop();
+    selectedIndex = scrollOffset = 0;
+  }
+}
+
+// Checks if it's possible to return to a previous menu
 bool MenuDisplay::canGoBack() const {
-  return !menuHistory.empty();  // True if history has menus
-}
-
-// Add icon to left side
-void MenuDisplay::addLeftIcon(std::shared_ptr<IIcon> icon) {
-  leftIcons.push_back(icon);
-}
-
-// Add icon to right side
-void MenuDisplay::addRightIcon(std::shared_ptr<IIcon> icon) {
-  rightIcons.push_back(icon);
-}
-
-// Clear all left icons
-void MenuDisplay::clearLeftIcons() {
-  leftIcons.clear();
-}
-
-// Clear all right icons
-void MenuDisplay::clearRightIcons() {
-  rightIcons.clear();
+  return !menuHistory.empty();
 }

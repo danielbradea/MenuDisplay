@@ -3,117 +3,121 @@
 #define MENU_DISPLAY_H
 
 // Include necessary libraries
-#include <Adafruit_GFX.h>  // Graphics library for display
-#include <vector>          // For dynamic arrays
-#include <memory>          // For smart pointers
-#include <stack>           // For menu history stack
-#include "IIcon.h"         // Icon interface
-#include "MenuItem.h"      // Menu item class
+#include <DisplayInterface.h>  // Graphics library for display
+#include <vector>              // For dynamic arrays
+#include <memory>              // For smart pointers
+#include <stack>               // For menu history stack
+#include "StatusBarElement.h"  // Status bar element interface
+#include "MenuItem.h"          // Menu item class
+#include <Arduino.h>
 
-// MenuDisplay class declaration
+// Declaration of the MenuDisplay class
 class MenuDisplay {
 private:
-  // Reference to the display object (using Adafruit GFX)
-  Adafruit_GFX& display;
+  // Reference to the display object (e.g. Adafruit GFX-based)
+  DisplayInterface& display;
 
-  // Icon bar configuration
-  std::vector<std::shared_ptr<IIcon>> leftIcons;   // Icons on left side of top bar
-  std::vector<std::shared_ptr<IIcon>> rightIcons;  // Icons on right side of top bar
-  int iconSpacing = 2;  // Space between icons in pixels
+  // Status bar configuration
+  std::vector<std::shared_ptr<StatusBarElement>> leftElements;   // Elements shown on the left side of the top bar
+  std::vector<std::shared_ptr<StatusBarElement>> rightElements;  // Elements shown on the right side of the top bar
+  int elementSpacing = 2;  // Pixel spacing between elements
 
   // Menu system configuration
   std::vector<std::shared_ptr<MenuItem>> currentMenu;  // Currently displayed menu items
-  std::stack<std::vector<std::shared_ptr<MenuItem>>> menuHistory;  // Menu navigation history
-  int selectedIndex = 0;    // Currently selected menu item index
+  std::stack<std::vector<std::shared_ptr<MenuItem>>> menuHistory;  // Stack for menu navigation history
+  int selectedIndex = 0;    // Index of the currently selected menu item
   int scrollOffset = 0;     // Scroll position for long menus
-  int visibleItems = 5;     // Number of menu items visible at once
+  int visibleElements = 5;  // Number of menu items visible at once
 
   // Top bar customization options
-  int topBarBgColor = 1;    // Background color of top bar
-  int topBarHeight = 13;    // Height of top bar in pixels
-  bool showTopBar = true;   // Whether to show top bar
+  int statusBarBgColor = 1;    // Background color of the top bar
+  int statusBarHeight = 13;    // Height of the top bar in pixels
+  bool showStatusBar = true;   // Whether the top bar should be displayed
 
-  // Display dimensions (default 128x64)
+  // Display size (default 128x64)
   int displayVSize = 64;    // Vertical size (height)
   int displayHSize = 128;   // Horizontal size (width)
 
+  // Whether the display should be rendered
+  bool renderDisplay = true;
+
 public:
   // Constructor - takes a reference to the display
-  MenuDisplay(Adafruit_GFX& disp)
-    : display(disp) {}  // Initializer list sets display reference
+  MenuDisplay(DisplayInterface& disp)
+    : display(disp) {}  // Use initializer list to assign display reference
 
-  // ========== ICON MANAGEMENT METHODS ==========
+  // ========== STATUS BAR ELEMENT MANAGEMENT ==========
 
-  // Set spacing between icons
-  void setIconSpacing(int spacing) {
-    iconSpacing = spacing;
+  void setElementSpacing(int spacing) {
+    elementSpacing = spacing;
+  }
+
+  void addLeftElement(std::shared_ptr<StatusBarElement> element) {
+    leftElements.push_back(element);
   }
   
-  // Add icon to left side (implementation in .cpp)
-  void addLeftIcon(std::shared_ptr<IIcon> icon);
-  
-  // Add icon to right side (implementation in .cpp)
-  void addRightIcon(std::shared_ptr<IIcon> icon);
-  
-  // Clear all left icons
-  void clearLeftIcons();
-  
-  // Clear all right icons
-  void clearRightIcons();
+  void addRightElement(std::shared_ptr<StatusBarElement> element) {
+    rightElements.push_back(element);
+  }
+
+  void clearLeftElements();
+  void clearRightElements();
 
   // ========== TOP BAR CONFIGURATION ==========
 
-  // Set top bar background color
-  void setTopBarBackgroundColor(int color) {
-    topBarBgColor = color;
+  void setStatusBarBackgroundColor(int color) {
+    statusBarBgColor = color;
   }
-  
-  // Set top bar height
-  void setTopBarHeight(int height) {
-    topBarHeight = height;
+
+  int getStatusBarBackgroundColor() {
+    return statusBarBgColor;
   }
-  
-  // Show/hide top bar
-  void setShowTopBar(bool show) {
-    showTopBar = show;
+
+  void setStatusBarHeight(int height) {
+    statusBarHeight = height;
+  }
+
+  void setShowStatusBar(bool show) {
+    showStatusBar = show;
   }
 
   // ========== DISPLAY CONFIGURATION ==========
 
-  // Set custom display dimensions (if different from default 128x64)
   void setDisplaySize(int width, int height) {
     displayHSize = width;
     displayVSize = height;
   }
 
+  void setRenderDisplay(bool display) {
+    renderDisplay = display;
+  }
+
+  bool isRenderDisplay() {
+    return renderDisplay;
+  }
+
   // ========== MENU MANAGEMENT METHODS ==========
 
-  // Set current menu (replaces existing menu)
-  void setMenu(const std::vector<std::shared_ptr<MenuItem>>& menu);
-  
-  // Navigation methods
-  void scrollUp();      // Move selection up
-  void scrollDown();    // Move selection down
-  void select();        // Select current item
-  void goBack();        // Return to previous menu
-  bool canGoBack() const; // Check if back navigation is possible
-  
-  // Set number of visible menu items (constrained between 1 and 10)
-  void setVisibleItems(int count) {
-    visibleItems = max(1, count);
+  void setMenu(const std::vector<std::shared_ptr<MenuItem>>& menu);  // Set the active menu
+  void scrollUp();      // Scroll up in the menu
+  void scrollDown();    // Scroll down in the menu
+  void select();        // Select the current item
+  void goBack();        // Go back to the previous menu
+  bool canGoBack() const;  // Check if back navigation is possible
+
+  void setVisibleElements(int count) {
+    visibleElements = max(1, count);
   }
-  
-  // Update/redraw entire display
-  void update();
+
+  void render();  // Render the menu and status bar
 
 private:
-  // ========== PRIVATE DRAWING METHODS ==========
-  
-  void drawLeftIcons() const;    // Draw left-aligned icons
-  void drawRightIcons() const;   // Draw right-aligned icons
-  void drawTopBar() const;       // Draw top bar background
-  void drawMenu() const;         // Draw menu items
-  void drawScrollBar() const;    // Draw scroll indicator
+  // ========== PRIVATE RENDERING HELPERS ==========
+
+  void renderLeftElements() const;          // Render left-aligned status bar elements
+  void renderRightElements() const;         // Render right-aligned status bar elements
+  void renderMenu() const;                  // Render the menu items
+  void renderScrollIndicator() const;       // Render the scroll indicator
 };
 
 // End of header guard

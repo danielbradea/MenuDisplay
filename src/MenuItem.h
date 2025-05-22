@@ -1,59 +1,56 @@
-// Header guard to prevent multiple inclusions
 #ifndef MENU_ITEM_H
 #define MENU_ITEM_H
 
-// Include necessary standard libraries
-#include <string>       // For std::string
-#include <vector>       // For std::vector
-#include <memory>       // For std::shared_ptr
-#include <functional>   // For std::function
+#include <string>
+#include <vector>
+#include <memory>
 
-// MenuItem class declaration
+// Simple function pointer type for menu actions (without using std::function)
+using MenuAction = void(*)();
+
+// Represents a single menu item which may contain an action and/or a submenu
 class MenuItem {
 private:
-  // Private member variables:
-  std::string label;  // The text displayed for this menu item
-  std::function<void()> action;  // Callback function when item is activated
-  std::vector<std::shared_ptr<MenuItem>> submenu;  // List of submenu items
+    std::string label;  // The label text displayed for this menu item
+    MenuAction action = nullptr;  // Optional action to execute when item is selected
+    std::vector<std::shared_ptr<MenuItem>> submenu;  // Optional submenu items
 
 public:
-  // Constructor - creates a new menu item with specified label and optional action
-  // Parameters:
-  //   label - the text to display for this menu item
-  //   action - optional callback function (defaults to nullptr)
-  MenuItem(const std::string& label, std::function<void()> action = nullptr)
-    : label(label), action(action) {}  // Initializer list sets members
+    // Constructor with label and optional action
+    MenuItem(const std::string& label, MenuAction action = nullptr)
+        : label(label), action(action) {}
 
-  // Get the label text of this menu item
-  // Returns: constant reference to the label string
-  const std::string& getLabel() const {
-    return label;
-  }
+    virtual ~MenuItem() = default;
 
-  // Set a submenu for this item
-  // Parameters:
-  //   items - vector of shared pointers to MenuItems that will form the submenu
-  void setSubmenu(const std::vector<std::shared_ptr<MenuItem>>& items) {
-    submenu = items;  // Copy the submenu items
-  }
+    // Returns the label of this menu item
+    const std::string& getLabel() const {
+        return label;
+    }
 
-  // Check if this item has a submenu
-  // Returns: true if submenu is not empty, false otherwise
-  bool hasSubmenu() const {
-    return !submenu.empty();  // Returns true if submenu has items
-  }
+    // Sets the submenu items for this menu item
+    void setSubmenu(const std::vector<std::shared_ptr<MenuItem>>& items) {
+        submenu = items;
+    }
 
-  // Get the submenu items
-  // Returns: constant reference to the vector of submenu items
-  const std::vector<std::shared_ptr<MenuItem>>& getSubmenu() const {
-    return submenu;
-  }
+    // Adds a single submenu item to this menu item
+    void addSubmenuItem(const std::shared_ptr<MenuItem>& item) {
+        submenu.push_back(item);
+    }
 
-  // Activate this menu item (execute its action)
-  void activate() const {
-    if (action) action();  // Only call if action is set (not nullptr)
-  }
+    // Checks whether this menu item has a submenu
+    bool hasSubmenu() const {
+        return !submenu.empty();
+    }
+
+    // Returns the submenu associated with this item
+    const std::vector<std::shared_ptr<MenuItem>>& getSubmenu() const {
+        return submenu;
+    }
+
+    // Executes the assigned action if any
+    void activate() const {
+        if (action) action();
+    }
 };
 
-// End of header guard
 #endif

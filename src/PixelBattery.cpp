@@ -1,30 +1,31 @@
 #include <string>
 #include "PixelBattery.h"
 
+
 // Sprite definitions - 9x14 pixel arrays representing different battery states
 
 // Full battery icon (100% charge)
 const uint8_t PixelBattery::BATTERY_FULL[9][14] = {
-  { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // Top border with battery tip
-  { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, // Left border
-  { 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, // Full battery bars (3)
-  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, // Full battery bars (3)
-  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, // Full battery bars (3)
-  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, // Full battery bars (3)
-  { 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, // Full battery bars (3)
-  { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, // Bottom border
-  { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }  // Bottom border with battery tip
+  { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, 
+  { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, 
+  { 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1 }, 
+  { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }  
 };
 
 // 65% battery icon (similar structure but with fewer bars)
 const uint8_t PixelBattery::BATTERY_65[9][14] = {
   { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
   { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-  { 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, // Only 2 bars visible
-  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, // Only 2 bars visible
-  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, // Only 2 bars visible
-  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, // Only 2 bars visible
-  { 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, // Only 2 bars visible
+  { 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, 
+  { 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1 }, 
   { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
   { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
 };
@@ -33,11 +34,11 @@ const uint8_t PixelBattery::BATTERY_65[9][14] = {
 const uint8_t PixelBattery::BATTERY_30[9][14] = {
   { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
   { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-  { 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, // Only 1 bar visible
-  { 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, // Only 1 bar visible
-  { 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, // Only 1 bar visible
-  { 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, // Only 1 bar visible
-  { 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, // Only 1 bar visible
+  { 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1 }, 
   { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
   { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
 };
@@ -46,40 +47,38 @@ const uint8_t PixelBattery::BATTERY_30[9][14] = {
 const uint8_t PixelBattery::BATTERY_EMPTY[9][14] = {
   { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
   { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-  { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, // No bars
-  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, // No bars
-  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, // No bars
-  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, // No bars
-  { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, // No bars
+  { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
+  { 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }, 
   { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
   { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
 };
 
-// Charging battery icon (with lightning bolt symbol)
+// Charging battery icon (with lightning Plug symbol)
 const uint8_t PixelBattery::BATTERY_CHARGING[9][14] = {
   { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
   { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-  { 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1 }, // Plug pattern
-  { 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1 }, // Plug pattern
-  { 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1 }, // Plug pattern
-  { 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1 }, // Plug pattern
-  { 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1 }, // Plug pattern
+  { 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1 }, 
+  { 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1 }, 
+  { 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1 }, 
+  { 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1 }, 
   { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
   { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
 };
 
-// Duplicate includes (could be removed)
-#include <string>
-#include "PixelBattery.h"
+
 
 // Draw method implementation
-void PixelBattery::draw(Adafruit_GFX& display, int xx, int yy) {
+void PixelBattery::draw(DisplayInterface& display, int xx, int yy) {
   // Pointer to the selected sprite
   const uint8_t(*sprite)[14];
   
   // Calculate drawing position with offsets
   // Adjust X position based on whether icon is left or right aligned
-  int drawX = x + xx + ((position == IconPosition::LEFT) ? offsetX : -offsetX); 
+  int drawX = x + xx + ((position == StatusBarElementPosition::LEFT) ? offsetX : -offsetX); 
   // Y position with vertical offset
   int drawY = y + yy + offsetY;
 
@@ -112,7 +111,7 @@ void PixelBattery::draw(Adafruit_GFX& display, int xx, int yy) {
   const int textWidth = strlen(textBuf) * charWidth; // Total text width
 
   // Handle left-aligned position
-  if (position == IconPosition::LEFT) {
+  if (position == StatusBarElementPosition::LEFT) {
     // Draw battery icon
     for (int row = 0; row < 9; row++) {
       for (int col = 0; col < 14; col++) {
@@ -172,28 +171,4 @@ void PixelBattery::setShowPercent(bool showPercent) {
   percent = showPercent;
 }
 
-// Position setters and getters
-void PixelBattery::setX(int x) {
-  this->x = x;
-}
 
-void PixelBattery::setY(int y) {
-  this->y = y;
-}
-
-int PixelBattery::getX() const {
-  return x;
-}
-
-int PixelBattery::getY() const {
-  return y;
-}
-
-// Color setters and getters
-void PixelBattery::setColor(uint16_t color) {
-  this->color = color;
-}
-
-uint16_t PixelBattery::getColor() const {
-  return color;
-}
