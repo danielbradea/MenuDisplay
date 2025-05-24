@@ -16,6 +16,8 @@ public:
   // Returns the width of the display
   virtual int width() const = 0;
 
+  virtual int height() const = 0;
+
   // Enables or disables automatic text wrapping
   virtual void setTextWrap(bool wrap) = 0;
 
@@ -39,13 +41,24 @@ public:
   virtual void printf(const char* format, ...) = 0;
 
   // Sets the text size (1 is default, 2 is double size, etc.)
-  virtual void setTextSize(uint8_t size) = 0;
+  virtual void setTextSize(int size) = 0;
 
   // Pushes all drawing changes to the actual display
   virtual void display() = 0;
 
-  // Clears the display buffer (not necessarily the screen immediately)
+  // Clears the display buffer 
   virtual void clearDisplay() = 0;
+
+  virtual void drawTriangle(int x0, int y0, 
+                          int x1, int y1,
+                          int x2, int y2, 
+                          int color) = 0;
+                          
+  virtual void fillTriangle(int x0, int y0,
+                          int x1, int y1,
+                          int x2, int y2,
+                          int color) = 0;
+
 
 };
 

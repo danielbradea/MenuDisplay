@@ -78,49 +78,78 @@ void MenuDisplay::renderRightElements() const {
 
 // Draws the visible portion of the menu
 void MenuDisplay::renderMenu() const {
-  int startY = showStatusBar ? statusBarHeight + 2 : 0;
   constexpr int lineHeight = 10;
   constexpr int prefixWidth = 12;
   constexpr int charWidth = 6;
-  constexpr unsigned long scrollInterval = 40;
 
-  int scrollbarWidth = (currentMenu.size() > visibleElements) ? 3 : 0;
-  int maxWidth = display.width() - 4 - scrollbarWidth;
-  unsigned long currentMillis = millis();
+  const int startY = showStatusBar ? statusBarHeight + 2 : 0;
+  const int scrollbarWidth = (currentMenu.size() > visibleElements) ? 3 : 0;
+  const int contentWidth = display.width() - 4 - scrollbarWidth;
+
+  display.setTextWrap(false);
+  display.setTextColor(1);
+
+  auto getVisibleText = [&](const std::string& label, bool isSelected, int availableWidth) -> std::string {
+    if (!isSelected || label.length() * charWidth <= availableWidth)
+      return label;
+
+    if (!isScrollingManually) {
+      int maxChars = availableWidth / charWidth;
+      return (maxChars > 3) ? label.substr(0, maxChars - 3) + "..." : "...";
+    }
+
+    // Scroll manual: permitem un pas în plus ca ultimul caracter să fie complet vizibil
+    int labelPixelWidth = label.length() * charWidth;
+    int maxScroll = std::max(0, labelPixelWidth - availableWidth);
+    int pixelOffset = std::min(manualScrollOffset, maxScroll);
+
+    int currentX = 0, startChar = 0;
+    while (startChar <= label.size() && currentX + charWidth <= pixelOffset) {
+      currentX += charWidth;
+      ++startChar;
+    }
+
+    std::string result;
+    int drawnWidth = currentX - pixelOffset;
+
+    for (size_t j = startChar; j < label.size() && drawnWidth + charWidth <= availableWidth; ++j) {
+      result += label[j];
+      drawnWidth += charWidth;
+    }
+
+    return result;
+  };
 
   for (int i = 0; i < visibleElements; ++i) {
     int idx = scrollOffset + i;
     if (idx >= currentMenu.size()) break;
 
-    std::string label = currentMenu[idx]->getLabel();
-    int textWidth = label.length() * charWidth;
-    int availableWidth = maxWidth - ((idx == selectedIndex) ? prefixWidth : 0);
-    int scrollX = 0;
+    const std::string& label = currentMenu[idx]->getLabel();
+    bool isSelected = (idx == selectedIndex);
+    int availableWidth = contentWidth - (isSelected ? prefixWidth : 0);
+    int y = startY + i * lineHeight;
 
-    // Handle text scrolling if label is too long
-    if (idx == selectedIndex && textWidth > availableWidth) {
-      int overflow = textWidth - availableWidth;
-      unsigned long totalCycle = overflow * 2;
-      unsigned long step = (currentMillis / scrollInterval) % totalCycle;
-      scrollX = (step > overflow) ? (step - overflow) : (overflow - step);
-      scrollX = -scrollX;
+    // Clear background
+    display.fillRect(2, y, display.width() - 4, lineHeight, 0);
+
+    // Draw selection indicator
+    int textStartX = 2;
+    if (isSelected) {
+      display.setCursor(textStartX, y);
+      display.print("> ");
+      textStartX += prefixWidth;
     }
 
-    display.fillRect(0, startY + i * lineHeight - 1, display.width(), lineHeight, 0);  // Clear line
-    display.setTextWrap(false);
-    display.setTextColor(1);
+    // Compute visible text
+    std::string visibleText = getVisibleText(label, isSelected, availableWidth);
 
-    int textStartX = 0;
-    if (idx == selectedIndex) {
-      display.setCursor(0, startY + i * lineHeight);
-      display.print("> ");  // Indicate selected item
-      textStartX = prefixWidth;
-    }
-
-    display.setCursor(textStartX + scrollX, startY + i * lineHeight);
-    display.print(label.c_str());
+    // Draw text
+    display.setCursor(textStartX, y);
+    display.print(visibleText.c_str());
   }
 }
+
+
 
 // Renders the scroll indicator on the right side of the display
 void MenuDisplay::renderScrollIndicator() const {
@@ -161,6 +190,7 @@ void MenuDisplay::scrollUp() {
     selectedIndex--;
     if (selectedIndex < scrollOffset) scrollOffset--;
   }
+  manualScrollOffset = 0;
 }
 
 // Navigates one item down in the menu
@@ -169,6 +199,7 @@ void MenuDisplay::scrollDown() {
     selectedIndex++;
     if (selectedIndex >= scrollOffset + visibleElements) scrollOffset++;
   }
+  manualScrollOffset = 0;
 }
 
 // Activates the selected menu item or enters a submenu
@@ -183,6 +214,7 @@ void MenuDisplay::select() {
       selected->activate();  // Execute menu action
     }
   }
+  manualScrollOffset = 0;
 }
 
 // Returns to the previous menu (if available)
@@ -192,9 +224,38 @@ void MenuDisplay::goBack() {
     menuHistory.pop();
     selectedIndex = scrollOffset = 0;
   }
+  manualScrollOffset = 0;
 }
 
 // Checks if it's possible to return to a previous menu
 bool MenuDisplay::canGoBack() const {
   return !menuHistory.empty();
 }
+
+// Horizontal scrolling controls
+void MenuDisplay::scrollLeft() {
+   if (manualScrollOffset > 0) {
+    manualScrollOffset = std::max(manualScrollOffset - charWidth, 0);
+    if (manualScrollOffset == 0) {
+      isScrollingManually = false;
+    }
+  }
+  
+}
+
+void MenuDisplay::scrollRight() {
+ if (selectedIndex >= 0 && selectedIndex < currentMenu.size()) {
+    const std::string label = currentMenu[selectedIndex]->getLabel();
+    const int textWidth = label.length() * charWidth;
+    const int availableWidth = displayHSize - prefixWidth - 4; // Account for padding
+    
+    if (textWidth > availableWidth) {
+      isScrollingManually = true;
+      manualScrollOffset = std::min(
+        manualScrollOffset + charWidth, 
+        textWidth - availableWidth
+      );
+    }
+  }
+}
+

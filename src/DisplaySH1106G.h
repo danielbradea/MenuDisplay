@@ -37,6 +37,10 @@ public:
     return oled.width();
   }
 
+  int height() const override {
+    return oled.height();
+  }
+
   // Enable or disable text wrapping
   void setTextWrap(bool wrap) override {
     oled.setTextWrap(wrap);
@@ -67,6 +71,22 @@ public:
     oled.drawPixel(x, y, color);
   }
 
+   // Draw a triangle outline
+  void drawTriangle(int x0, int y0, 
+                   int x1, int y1,
+                   int x2, int y2, 
+                   int color) override {
+    oled.drawTriangle(x0, y0, x1, y1, x2, y2, color);
+  }
+
+  // Draw a filled triangle
+  void fillTriangle(int x0, int y0,
+                   int x1, int y1,
+                   int x2, int y2,
+                   int color) override {
+    oled.fillTriangle(x0, y0, x1, y1, x2, y2, color);
+  }
+
   // Refresh the display with the current buffer contents
   void display() override {
     oled.display();
@@ -88,7 +108,7 @@ public:
   }
 
   // Set the size of the text
-  void setTextSize(uint8_t size) override {
+  void setTextSize(int size) override {
     oled.setTextSize(size);
   }
 

@@ -18,107 +18,128 @@ private:
   DisplayInterface& display;
 
   // Status bar configuration
-  std::vector<std::shared_ptr<StatusBarElement>> leftElements;   // Elements shown on the left side of the top bar
-  std::vector<std::shared_ptr<StatusBarElement>> rightElements;  // Elements shown on the right side of the top bar
-  int elementSpacing = 2;  // Pixel spacing between elements
+  std::vector<std::shared_ptr<StatusBarElement>> leftElements;   // Left-aligned status bar elements
+  std::vector<std::shared_ptr<StatusBarElement>> rightElements;  // Right-aligned status bar elements
+  int elementSpacing = 2;  // Pixel spacing between status bar elements
 
   // Menu system configuration
   std::vector<std::shared_ptr<MenuItem>> currentMenu;  // Currently displayed menu items
-  std::stack<std::vector<std::shared_ptr<MenuItem>>> menuHistory;  // Stack for menu navigation history
-  int selectedIndex = 0;    // Index of the currently selected menu item
-  int scrollOffset = 0;     // Scroll position for long menus
-  int visibleElements = 5;  // Number of menu items visible at once
+  std::stack<std::vector<std::shared_ptr<MenuItem>>> menuHistory;  // Menu navigation history stack
+  int selectedIndex = 0;    // Index of currently selected menu item
+  int scrollOffset = 0;     // Vertical scroll position for long menus
+  int visibleElements = 5;  // Number of visible menu items at once
+
+  // Horizontal scrolling control
+  int manualScrollOffset = 0;       // Current horizontal scroll offset
+  bool isScrollingManually = false; // Whether manual scrolling is active
+  const int charWidth = 6;          // Monospace character width (pixels)
+  const int prefixWidth = 12;       // Width for "> " prefix before selected item
 
   // Top bar customization options
-  int statusBarBgColor = 1;    // Background color of the top bar
-  int statusBarHeight = 13;    // Height of the top bar in pixels
-  bool showStatusBar = true;   // Whether the top bar should be displayed
+  int statusBarBgColor = 1;    // Status bar background color (0/1 for monochrome)
+  int statusBarHeight = 13;    // Status bar height in pixels
+  bool showStatusBar = true;   // Whether to show status bar
 
-  // Display size (default 128x64)
+  // Display dimensions (default 128x64)
   int displayVSize = 64;    // Vertical size (height)
   int displayHSize = 128;   // Horizontal size (width)
 
-  // Whether the display should be rendered
-  bool renderDisplay = true;
+  // Display control flag
+  bool renderDisplay = true;  // Whether to render the display
 
 public:
   // Constructor - takes a reference to the display
   MenuDisplay(DisplayInterface& disp)
-    : display(disp) {}  // Use initializer list to assign display reference
+    : display(disp) {}  // Initialize display reference
 
   // ========== STATUS BAR ELEMENT MANAGEMENT ==========
 
+  // Set spacing between status bar elements
   void setElementSpacing(int spacing) {
     elementSpacing = spacing;
   }
 
+  // Add element to left side of status bar
   void addLeftElement(std::shared_ptr<StatusBarElement> element) {
     leftElements.push_back(element);
   }
   
+  // Add element to right side of status bar
   void addRightElement(std::shared_ptr<StatusBarElement> element) {
     rightElements.push_back(element);
   }
 
+  // Clear all left/right status bar elements
   void clearLeftElements();
   void clearRightElements();
 
   // ========== TOP BAR CONFIGURATION ==========
 
+  // Set status bar background color
   void setStatusBarBackgroundColor(int color) {
     statusBarBgColor = color;
   }
 
+  // Get current status bar color
   int getStatusBarBackgroundColor() {
     return statusBarBgColor;
   }
 
+  // Set status bar height
   void setStatusBarHeight(int height) {
     statusBarHeight = height;
   }
 
+  // Show/hide status bar
   void setShowStatusBar(bool show) {
     showStatusBar = show;
   }
 
   // ========== DISPLAY CONFIGURATION ==========
 
+  // Set display dimensions
   void setDisplaySize(int width, int height) {
     displayHSize = width;
     displayVSize = height;
   }
 
-  void setRenderDisplay(bool display) {
-    renderDisplay = display;
+  // Enable/disable display rendering
+  void setRenderDisplay(bool isRender) {
+    renderDisplay = isRender;
   }
 
+  // Check if rendering is enabled
   bool isRenderDisplay() {
     return renderDisplay;
   }
 
   // ========== MENU MANAGEMENT METHODS ==========
 
-  void setMenu(const std::vector<std::shared_ptr<MenuItem>>& menu);  // Set the active menu
-  void scrollUp();      // Scroll up in the menu
-  void scrollDown();    // Scroll down in the menu
-  void select();        // Select the current item
-  void goBack();        // Go back to the previous menu
+  // Core menu functions
+  void setMenu(const std::vector<std::shared_ptr<MenuItem>>& menu);  // Set active menu
+  void scrollUp();      // Move selection up
+  void scrollDown();    // Move selection down
+  void scrollLeft();    // Scroll text left (for long items)
+  void scrollRight();   // Scroll text right (for long items)
+  void select();        // Activate selected item
+  void goBack();        // Return to previous menu
   bool canGoBack() const;  // Check if back navigation is possible
 
+  // Set number of visible menu items
   void setVisibleElements(int count) {
-    visibleElements = max(1, count);
+    visibleElements = max(1, count);  // Ensure at least 1 item is visible
   }
 
-  void render();  // Render the menu and status bar
+  // Main rendering function
+  void render();  // Render entire display
 
 private:
   // ========== PRIVATE RENDERING HELPERS ==========
 
-  void renderLeftElements() const;          // Render left-aligned status bar elements
-  void renderRightElements() const;         // Render right-aligned status bar elements
-  void renderMenu() const;                  // Render the menu items
-  void renderScrollIndicator() const;       // Render the scroll indicator
+  void renderLeftElements() const;     // Render left status bar elements
+  void renderRightElements() const;    // Render right status bar elements
+  void renderMenu() const;             // Render menu items
+  void renderScrollIndicator() const;  // Render vertical scrollbar
 };
 
-// End of header guard
-#endif
+#endif // MENU_DISPLAY_H
